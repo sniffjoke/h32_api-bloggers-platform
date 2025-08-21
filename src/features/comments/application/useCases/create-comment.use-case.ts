@@ -38,7 +38,7 @@ export class CreateCommentUseCase
     }
     const post = await this.postsRepository.findPostById(command.postId);
     const checkUserInBL = await this.blogsRepository.checkUserInBL(user.id, post.blogId)
-    if (checkUserInBL) {
+    if (checkUserInBL.length) {
       throw new ForbiddenException(`Forbidden, user ${user.login} in blackList for this blog`)
     }
     const findedPost = await this.postsRepository.findPostById(command.postId);

@@ -151,6 +151,7 @@ export class BlogsRepositoryTO {
       },
       // relations: ['user', 'blogBanInfo'],
     })
+    console.log('bannedItems: ', bannedItems);
     return bannedItems
   }
 

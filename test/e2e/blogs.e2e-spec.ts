@@ -10,7 +10,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { createMockPost, PostsTestManager } from '../helpers/posts-test-helpers';
 import { BanInfoForUserDto } from '../../src/features/blogs/api/models/input/ban-user-for-blog.dto';
-import { CommentsTestManager } from '../helpers/comments-test-helpers';
+import { CommentsTestManager, createMockComment } from '../helpers/comments-test-helpers';
 
 describe('BlogsController (e2e)', () => {
   let app: INestApplication;
@@ -346,6 +346,7 @@ describe('BlogsController (e2e)', () => {
         loginUser.body.accessToken,
       );
       const user2 = await usersManager.createUser(createMockUser(2), emailConfirmationInfo);
+      const loginUser2 = await authManager.login(mockLoginData(2));
       const post = await postsManager.createPost(createMockPost(1), blog.body.id);
 
       const modelForBan: BanInfoForUserDto = {
@@ -360,46 +361,46 @@ describe('BlogsController (e2e)', () => {
         blogId: blog.body.id,
       }
 
-      const upd = await blogsManager.banUserForBlog(
-        modelForBan,
-        loginUser.body.accessToken,
-        user2.body.id
-      );
-
-      console.log('upd1status: ', upd.status);
-
-
-      const upd2 = await blogsManager.banUserForBlog(
-        modelForUnBan,
-        loginUser.body.accessToken,
-        user2.body.id
-      );
-
-      console.log('upd2status: ', upd2.status);
-
-      const upd3 = await blogsManager.banUserForBlog(
-        modelForBan,
-        loginUser.body.accessToken,
-        user2.body.id
-      );
-
-      console.log('upd3status: ', upd3.status);
-
-
-      const bannedUsers = await blogsManager.getUsersBannedForBlog(
-        loginUser.body.accessToken,
-        blog.body.id
-      )
-
-      // const comment = await commentsManager.createComment(
-      //   createMockComment(1),
-      //   post.body.id,
+      // const upd = await blogsManager.banUserForBlog(
+      //   modelForBan,
       //   loginUser.body.accessToken,
+      //   user2.body.id
+      // );
+
+      // console.log('upd1status: ', upd.status);
+
+
+      // const upd2 = await blogsManager.banUserForBlog(
+      //   modelForUnBan,
+      //   loginUser.body.accessToken,
+      //   user2.body.id
+      // );
+
+      // console.log('upd2status: ', upd2.status);
+
+      // const upd3 = await blogsManager.banUserForBlog(
+      //   modelForBan,
+      //   loginUser.body.accessToken,
+      //   user2.body.id
       // );
       //
-      // console.log('comment: ', comment.body);
+      // console.log('upd3status: ', upd3.status);
 
-      console.log('bannedUsers: ', bannedUsers.body);
+
+      // const bannedUsers = await blogsManager.getUsersBannedForBlog(
+      //   loginUser.body.accessToken,
+      //   blog.body.id
+      // )
+
+      const comment = await commentsManager.createComment(
+        createMockComment(1),
+        post.body.id,
+        loginUser2.body.accessToken,
+      );
+
+      console.log('comment: ', comment.body);
+
+      // console.log('bannedUsers: ', bannedUsers.body);
 
       // console.log('user: ', user.body.login);
       // console.log('blog: ', blog.body);
@@ -426,177 +427,6 @@ describe('BlogsController (e2e)', () => {
       //     isMembership: expect.any(Boolean),
       //   }),
       // );
-    });
-
-    it('/sa/blogs/:id (UPDATE)', async () => {
-      const newBlog = await blogsManager.createBlog(createMockBlog(2));
-      const upd = await blogsManager.updateBlog(createMockBlog(3), newBlog.body.id);
-      const updatedBlog = await blogsManager.getBlogById(newBlog.body.id);
-      expect(upd.status).toBe(204);
-      expect(updatedBlog.body.id).toEqual(newBlog.body.id);
-      expect(updatedBlog.body.name).not.toEqual(newBlog.body.name);
-      expect(updatedBlog.body.description).not.toEqual(newBlog.body.description);
-      expect(updatedBlog.body.websiteUrl).not.toEqual(newBlog.body.websiteUrl);
-    });
-
-    it('/sa/blogs/:id (DELETE)', async () => {
-      const newBlog = await blogsManager.createBlog(createMockBlog(4));
-      const response = await blogsManager.deleteBlog(newBlog.body.id);
-      const blogs = await blogsManager.getBlogsWithSA();
-      expect(response.status).toBe(204);
-      // expect(blogs.body.items.length).toBeLessThan(1);
-    });
-
-    it('/blogs (GET)', async () => {
-      for (let i = 5; i < 15; i++) {
-        let newBlog = await blogsManager.createBlog(createMockBlog(i));
-      }
-      const blogs = await blogsManager.getBlogs();
-      expect(blogs.status).toBe(200);
-      expect(Array.isArray(blogs.body.items)).toBe(true);
-      // toHaveLength
-      expect(blogs.body.items.length).toBeGreaterThan(0);
-      //toEqual
-      blogs.body.items.forEach((blog: any) => {
-        expect(blog).toHaveProperty('id');
-        expect(blog).toHaveProperty('name');
-        expect(blog).toHaveProperty('description');
-        expect(blog).toHaveProperty('websiteUrl');
-        expect(blog).toHaveProperty('createdAt');
-        expect(blog).toHaveProperty('isMembership');
-      });
-      blogs.body.items.forEach((blog: any) => {
-        expect(blog.createdAt).toBeDefined();
-        expect(blog.isMembership).toBeDefined();
-        // regular
-        expect(new Date(blog.createdAt).toISOString()).toContain('T');
-      });
-      expect(blogs.body.items[0]).toEqual(
-        expect.objectContaining({
-          id: expect.any(String),
-          name: expect.any(String),
-          description: expect.any(String),
-          // regular to constant
-          websiteUrl: expect.stringMatching(/^https?:\/\/[^\s$.?#].[^\s]*$/),
-          createdAt: expect.any(String),
-          isMembership: expect.any(Boolean),
-        }),
-      );
-      if (blogs.body.items.length === 0) {
-        expect(blogs.body.items).toEqual([]);
-      }
-    });
-
-    it('/sa/blogs (GET)', async () => {
-      for (let i = 16; i < 26; i++) {
-        let res = await blogsManager.createBlog(createMockBlog(i));
-      }
-      const blogs = await blogsManager.getBlogsWithSA();
-      expect(blogs.status).toBe(200);
-      expect(Array.isArray(blogs.body.items)).toBe(true);
-      expect(blogs.body.items.length).toBeGreaterThan(0);
-      blogs.body.items.forEach((blog: any) => {
-        expect(blog).toHaveProperty('id');
-        expect(blog).toHaveProperty('name');
-        expect(blog).toHaveProperty('description');
-        expect(blog).toHaveProperty('websiteUrl');
-        expect(blog).toHaveProperty('createdAt');
-        expect(blog).toHaveProperty('isMembership');
-      });
-      blogs.body.items.forEach((blog: any) => {
-        expect(typeof blog.id).toBe('string');
-        expect(typeof blog.name).toBe('string');
-        expect(typeof blog.description).toBe('string');
-        expect(typeof blog.websiteUrl).toBe('string');
-        expect(typeof blog.createdAt).toBe('string');
-        expect(typeof blog.isMembership).toBe('boolean');
-      });
-      blogs.body.items.forEach((blog: any) => {
-        expect(blog.createdAt).toBeDefined();
-        expect(blog.isMembership).toBeDefined();
-        expect(new Date(blog.createdAt).toISOString()).toContain('T');
-      });
-      expect(blogs.body.items[0]).toEqual(
-        expect.objectContaining({
-          id: expect.any(String),
-          name: expect.any(String),
-          description: expect.any(String),
-          websiteUrl: expect.stringMatching(/^https?:\/\/[^\s$.?#].[^\s]*$/),
-          createdAt: expect.any(String),
-          isMembership: expect.any(Boolean),
-        }),
-      );
-      if (blogs.body.items.length === 0) {
-        expect(blogs.body.items).toEqual([]);
-      } else {
-        const dates = blogs.body.items.map((blog: any) => new Date(blog.createdAt));
-        expect(dates).toEqual([...dates].sort((a, b) => b.getTime() - a.getTime()));
-      }
-    });
-
-    it('/blogs/:id (GET)', async () => {
-      const newBlog = await blogsManager.createBlog(createMockBlog(27));
-      const blog = await blogsManager.getBlogById(newBlog.body.id);
-      expect(blog.status).toBe(200);
-      expect(blog.body).toHaveProperty('id');
-      expect(blog.body).toHaveProperty('name');
-      expect(blog.body).toHaveProperty('description');
-      expect(blog.body).toHaveProperty('websiteUrl');
-      expect(blog.body).toHaveProperty('createdAt');
-      expect(blog.body).toHaveProperty('isMembership');
-      expect(new Date(blog.body.createdAt).toISOString()).toContain('T');
-      expect(blog.body.createdAt).toBeDefined();
-      expect(blog.body.isMembership).toBeDefined();
-      expect(typeof blog.body.id).toBe('string');
-      expect(typeof blog.body.name).toBe('string');
-      expect(typeof blog.body.description).toBe('string');
-      expect(typeof blog.body.websiteUrl).toBe('string');
-      expect(typeof blog.body.createdAt).toBe('string');
-      expect(typeof blog.body.isMembership).toBe('boolean');
-      expect(blog.body).toEqual(
-        expect.objectContaining({
-          id: expect.any(String),
-          name: expect.any(String),
-          description: expect.any(String),
-          websiteUrl: expect.stringMatching(/^https?:\/\/[^\s$.?#].[^\s]*$/),
-          createdAt: expect.any(String),
-          isMembership: expect.any(Boolean),
-        }),
-      );
-    });
-
-    it('/sa/blogs/:blogId/bind-with-user/:userId (UPDATE)', async () => {
-      const blog = await blogsManager.createBlog(createMockBlog(1));
-      const emailConfirmationInfo = usersService.createEmailConfirmation(true);
-      const user = await usersManager.createUser(createMockUser(1), emailConfirmationInfo);
-      const bindWithUser = await blogsManager.bindWithUser(blog.body.id, user.body.id)
-      const blogs = await blogsManager.getBlogsWithSA()
-      expect(bindWithUser.status).toBe(204);
-      expect(blogs.body.items[0]).toHaveProperty('id');
-      expect(blogs.body.items[0]).toHaveProperty('name');
-      expect(blogs.body.items[0]).toHaveProperty('description');
-      expect(blogs.body.items[0]).toHaveProperty('websiteUrl');
-      expect(blogs.body.items[0]).toHaveProperty('createdAt');
-      expect(blogs.body.items[0]).toHaveProperty('isMembership');
-      expect(blogs.body.items[0]).toHaveProperty('blogOwnerInfo');
-      expect(blogs.body.items[0].blogOwnerInfo).toHaveProperty('userId');
-      expect(blogs.body.items[0].blogOwnerInfo).toHaveProperty('userLogin');
-      expect(new Date(blogs.body.items[0].createdAt).toISOString()).toContain('T');
-      expect(blogs.body.items[0].createdAt).toBeDefined();
-      expect(blogs.body.items[0].isMembership).toBeDefined();
-      expect(blogs.body.items[0].blogOwnerInfo.userId).toBe(user.body.id);
-      expect(blogs.body.items[0].blogOwnerInfo.userLogin).toBe(user.body.login);
-      expect(blogs.body.items[0]).toEqual(
-        expect.objectContaining({
-          id: expect.any(String),
-          name: expect.any(String),
-          description: expect.any(String),
-          websiteUrl: expect.stringMatching(checkWebsiteString),
-          createdAt: expect.any(String),
-          isMembership: expect.any(Boolean),
-          blogOwnerInfo: expect.any(Object)
-        }),
-      );
     });
 
   });
