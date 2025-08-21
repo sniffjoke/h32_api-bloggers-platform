@@ -113,4 +113,13 @@ export class BlogsSAController {
     return await this.commandBus.execute(new BindUserToBlogCommand(idParams.blogId, idParams.userId));
   }
 
+  //------------------_BLOGGER_PLATFORM_--------------------//
+
+  @Put('blogs/:id/ban')
+  @HttpCode(204)
+  @UseGuards(BasicAuthGuard)
+  async banBlogById(@Param('id') id: string) {
+    return console.log('123');
+  }
+
 }
