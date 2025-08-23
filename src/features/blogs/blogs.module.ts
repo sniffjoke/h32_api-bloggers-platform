@@ -14,10 +14,11 @@ import { UsersCheckHandler } from '../users/domain/users.check-handler';
 import { BlogBanEntity } from './domain/blogBan.entity';
 import { BlogsService } from './application/blogs.service';
 import { BlogBanInfoEntity } from './domain/blogBanInfo.entity';
+import { BlogBanBySuperEntity } from './domain/blogBanBySuper.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([BlogEntity, PostEntity, BlogBanEntity, BlogBanInfoEntity]),
+    TypeOrmModule.forFeature([BlogEntity, PostEntity, BlogBanEntity, BlogBanInfoEntity, BlogBanBySuperEntity]),
     PostsModule,
     UsersModule,
   ],
