@@ -27,6 +27,8 @@ import { BlogsQueryRepositoryTO } from '../infrastructure/blogs.query-repository
 import { PostsQueryRepositoryTO } from '../../posts/infrastructure/posts.query-repository.to';
 import {PostsService} from "../../posts/application/posts.service";
 import {BindUserToBlogCommand} from "../application/useCases/bind-user-to-blog.use-case";
+import { BlogsService } from '../application/blogs.service';
+import { BanBlogBySuperDto } from './models/input/ban-blog.input.dto';
 
 @Controller('sa')
 export class BlogsSAController {
@@ -35,6 +37,7 @@ export class BlogsSAController {
     private readonly blogsQueryRepository: BlogsQueryRepositoryTO,
     private readonly postsService: PostsService,
     private readonly postsQueryRepository: PostsQueryRepositoryTO,
+    private readonly blogsService: BlogsService
   ) {
   }
 
@@ -118,8 +121,8 @@ export class BlogsSAController {
   @Put('blogs/:id/ban')
   @HttpCode(204)
   @UseGuards(BasicAuthGuard)
-  async banBlogById(@Param('id') id: string) {
-    return console.log('123');
+  async banBlogById(@Param('id') id: string, @Body() dto: BanBlogBySuperDto) {
+    return await this.blogsService.banBlogBySuperUser(id, dto)
   }
 
 }

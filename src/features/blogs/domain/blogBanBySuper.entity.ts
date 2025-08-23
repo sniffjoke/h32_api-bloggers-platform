@@ -11,7 +11,7 @@ export class BlogBanBySuperEntity {
     @Column({default: false})
     isBanned: boolean
 
-    @Column({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+    @Column({type: 'timestamp', nullable: true})
     banDate: string;
 
     @OneToOne(() => BlogEntity, (blog) => blog.banInfo)

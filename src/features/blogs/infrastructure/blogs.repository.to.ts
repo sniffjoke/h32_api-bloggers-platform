@@ -8,6 +8,7 @@ import { BanInfoForUserDto } from '../api/models/input/ban-user-for-blog.dto';
 import { BlogBanEntity } from '../domain/blogBan.entity';
 import { BlogBanInfoEntity } from '../domain/blogBanInfo.entity';
 import { BlogBanBySuperEntity } from '../domain/blogBanBySuper.entity';
+import { BanBlogBySuperDto } from '../api/models/input/ban-blog.input.dto';
 
 @Injectable()
 export class BlogsRepositoryTO {
@@ -38,6 +39,7 @@ export class BlogsRepositoryTO {
   async findBlogById(id: string) {
     const findedBlog = await this.bRepository.findOne({
       where: { id },
+      relations: ['banInfo'],
     });
     if (!findedBlog) {
       throw new NotFoundException(`Blog with id ${id} not found`);
@@ -88,16 +90,11 @@ export class BlogsRepositoryTO {
         where: { userId: user.id, blogId: dto.blogId },
       });
 
-      // console.log(isBanExist);
-
       if (!isBanExist) {
         const ban = new BlogBanEntity();
         ban.blogId = dto.blogId;
         ban.userId = user.id;
         ban.banStatus = true;
-        // ban.user = user;
-        // ban.blog = blog;
-        // console.log('NewBan: ', ban);
         const newBan = await this.banRepository.save(ban);
         const banInfo = new BlogBanInfoEntity()
         banInfo.isBanned = dto.isBanned
@@ -110,7 +107,6 @@ export class BlogsRepositoryTO {
         where: { userId: user.id, blogId: dto.blogId },
       });
       if (!isBanExist) {
-        // throw new NotFoundException(`Not banned`);
         const ban = new BlogBanEntity();
         ban.blogId = dto.blogId;
         ban.userId = user.id;
@@ -124,7 +120,6 @@ export class BlogsRepositoryTO {
       } else {
         isBanExist.banStatus = false;
         await this.banRepository.save(isBanExist)
-        // await this.banRepository.delete({id: isBanExist.id})
       }
     }
     return;
@@ -137,7 +132,6 @@ export class BlogsRepositoryTO {
     })
     return bannedItems.map(item => {
       const {blogBanId, ...rest} = item.blogBanInfo;
-      // console.log('blogBanInfo: ', item.blogBanInfo);
       return {
         id: item.user.id.toString(),
         login: item.user.login,
@@ -154,10 +148,15 @@ export class BlogsRepositoryTO {
         blogId,
         banStatus: true
       },
-      // relations: ['user', 'blogBanInfo'],
     })
-    console.log('bannedItems: ', bannedItems);
     return bannedItems
+  }
+
+  async banBlogBySuperUser(blogId: string, banInfoDto: BanBlogBySuperDto) {
+    const findedBlog = await this.findBlogById(blogId);
+    findedBlog.banInfo.isBanned = banInfoDto.isBanned;
+    findedBlog.banInfo.banDate = new Date(Date.now()).toISOString()
+    return await this.bRepository.save(findedBlog);
   }
 
 }

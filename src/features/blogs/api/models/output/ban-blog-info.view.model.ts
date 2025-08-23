@@ -2,5 +2,5 @@
 
 export class BanBlogInfoViewModel {
     isBanned: boolean = false;
-    banDate: string;
+    banDate: string | null;
 }

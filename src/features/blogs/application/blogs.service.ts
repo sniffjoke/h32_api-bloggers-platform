@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { BlogsRepositoryTO } from '../infrastructure/blogs.repository.to';
 import { BanInfoForUserDto } from '../api/models/input/ban-user-for-blog.dto';
 import { UsersService } from '../../users/application/users.service';
+import { BanBlogBySuperDto } from '../api/models/input/ban-blog.input.dto';
 
 @Injectable()
 export class BlogsService {
@@ -14,11 +15,8 @@ export class BlogsService {
 
   async banUserForBlog(bearerHeader: string, dto: BanInfoForUserDto, userId: string) {
     const curUser = await this.usersService.getUserByAuthToken(bearerHeader);
-    // console.log('user: ', user);
     const blog = await this.blogsRepository.findBlogById(dto.blogId)
     if (curUser.id !== blog.userId) throw new ForbiddenException('Not match');
-    // console.log('blog: ', blog.userId);
-    // console.log('curUser: ', curUser.id);
     const user = await this.usersService.findUserById(userId);
     if (!user) throw new NotFoundException(`User with id ${userId} not found`);
     return await this.blogsRepository.banUserForBlog(dto, user)
@@ -38,6 +36,10 @@ export class BlogsService {
       totalCount: 0,
       items: users
     }
+  }
+
+  async banBlogBySuperUser(blogId: string, dto: BanBlogBySuperDto) {
+    return await this.blogsRepository.banBlogBySuperUser(blogId, dto)
   }
 
 }
