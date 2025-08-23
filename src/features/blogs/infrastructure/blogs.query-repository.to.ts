@@ -25,6 +25,7 @@ export class BlogsQueryRepositoryTO {
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: generateQuery.searchNameTerm.toLowerCase(),
       })
+      .andWhere('i.isBanned = :is', { is: false  })
       .orderBy(
         `b."${generateQuery.sortBy}"`,
         generateQuery.sortDirection.toUpperCase(),
@@ -54,9 +55,11 @@ export class BlogsQueryRepositoryTO {
       : '';
     const totalCount = this.bRepository
       .createQueryBuilder('b')
+      .leftJoinAndSelect('b.banInfo', 'i')
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: `%${searchNameTerm.toLowerCase()}%`,
-      });
+      })
+      .andWhere('i.isBanned = :is', { is: false  });
     if (getUsers) {
       totalCount.leftJoinAndSelect('b.user', 'user');
     }
