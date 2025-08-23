@@ -142,6 +142,13 @@ export class PostsQueryRepositoryTO {
                 dislikesCount: findedPost.dislikesCount,
             },
         };
+        const findedBlog = await this.bRepository.findOne({
+            where: { id: post.blogId },
+            relations: ['banInfo'],
+        });
+        if (findedBlog?.banInfo.isBanned) {
+            throw new NotFoundException(`Post with id ${post.blogId} not found or banned`);
+        }
         return this.postOutputMap(post);
     }
 
