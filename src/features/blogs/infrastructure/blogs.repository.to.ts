@@ -27,10 +27,11 @@ export class BlogsRepositoryTO {
     if (user) {
       blog.user = user;
     }
+    // const newBanInfoSuperUser = new BlogBanBySuperEntity()
+    // newBanInfoSuperUser.blogId = newBlog.id
+    blog.banInfo = new BlogBanBySuperEntity()
     const newBlog = await this.bRepository.save(blog);
-    const newBanInfoSuperUser = new BlogBanBySuperEntity()
-    newBanInfoSuperUser.blogId = newBlog.id
-    await this.bRepository.manager.save(newBanInfoSuperUser);
+    // await this.bRepository.manager.save(newBanInfoSuperUser);
     return newBlog.id;
   }
 

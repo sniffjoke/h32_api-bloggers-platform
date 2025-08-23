@@ -21,6 +21,7 @@ export class BlogsQueryRepositoryTO {
     const generateQuery = await this.generateQuery(query, getUsers, userId);
     const items = this.bRepository
       .createQueryBuilder('b')
+      .leftJoinAndSelect('b.banInfo', 'i')
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: generateQuery.searchNameTerm.toLowerCase(),
       })
@@ -80,6 +81,7 @@ export class BlogsQueryRepositoryTO {
   async blogOutput(id: string, user?: UserEntity) {
     const findedBlog = await this.bRepository.findOne({
       where: { id },
+      relations: ['banInfo'],
     });
     if (!findedBlog) {
       throw new NotFoundException(`Blog with id ${id} not found`);
@@ -89,7 +91,7 @@ export class BlogsQueryRepositoryTO {
   }
 
   blogOutputMap(blog: BlogViewModel, user?: UserEntity) {
-    const { id, name, description, websiteUrl, isMembership, createdAt } = blog;
+    const { id, name, description, websiteUrl, isMembership, createdAt, banInfo } = blog;
     const output: typeof blog = {
       id: id.toString(),
       name,
@@ -97,6 +99,10 @@ export class BlogsQueryRepositoryTO {
       websiteUrl,
       createdAt,
       isMembership,
+      banInfo: {
+        isBanned: banInfo.isBanned,
+        banDate: banInfo.banDate,
+      }
     };
 
     if (user) {
@@ -105,6 +111,7 @@ export class BlogsQueryRepositoryTO {
         userLogin: user.login,
       };
     }
+
 
     return output;
   }
