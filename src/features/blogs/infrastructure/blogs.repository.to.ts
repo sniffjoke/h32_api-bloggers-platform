@@ -7,6 +7,7 @@ import { UserEntity } from '../../users/domain/user.entity';
 import { BanInfoForUserDto } from '../api/models/input/ban-user-for-blog.dto';
 import { BlogBanEntity } from '../domain/blogBan.entity';
 import { BlogBanInfoEntity } from '../domain/blogBanInfo.entity';
+import { BlogBanBySuperEntity } from '../domain/blogBanBySuper.entity';
 
 @Injectable()
 export class BlogsRepositoryTO {
@@ -27,6 +28,9 @@ export class BlogsRepositoryTO {
       blog.user = user;
     }
     const newBlog = await this.bRepository.save(blog);
+    const newBanInfoSuperUser = new BlogBanBySuperEntity()
+    newBanInfoSuperUser.blogId = newBlog.id
+    await this.bRepository.manager.save(newBanInfoSuperUser);
     return newBlog.id;
   }
 
