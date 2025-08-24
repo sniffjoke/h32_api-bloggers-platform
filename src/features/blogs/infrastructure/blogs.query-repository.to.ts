@@ -7,6 +7,7 @@ import { BlogEntity } from '../domain/blogs.entity';
 import { UserEntity } from '../../users/domain/user.entity';
 import { BanUserForBlogViewModel } from '../api/models/output/ban-user-for-blog.view.dto';
 import { BlogBanInfoEntity } from '../domain/blogBanInfo.entity';
+import { BanBlogInfoViewModel } from '../api/models/output/ban-blog-info.view.model';
 
 @Injectable()
 export class BlogsQueryRepositoryTO {
@@ -17,7 +18,12 @@ export class BlogsQueryRepositoryTO {
     private readonly banInfoRepository: Repository<BlogBanInfoEntity>,
   ) {}
 
-  async getAllBlogsWithQuery(query: any, getUsers?: boolean, userId?: string) {
+  async getAllBlogsWithQuery(
+    query: any,
+    getUsers?: boolean,
+    userId?: string,
+    banInfo?: boolean,
+  ) {
     const generateQuery = await this.generateQuery(query, getUsers, userId);
     const items = this.bRepository
       .createQueryBuilder('b')
@@ -25,7 +31,7 @@ export class BlogsQueryRepositoryTO {
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: generateQuery.searchNameTerm.toLowerCase(),
       })
-      .andWhere('i.isBanned = :is', { is: false  })
+      .andWhere('i.isBanned = :is', { is: false })
       .orderBy(
         `b."${generateQuery.sortBy}"`,
         generateQuery.sortDirection.toUpperCase(),
@@ -40,7 +46,9 @@ export class BlogsQueryRepositoryTO {
     }
     const itemsWithQuery = await items.getMany();
     const itemsOutput = itemsWithQuery.map((item) =>
-      this.blogOutputMap(item, item.user),
+      banInfo
+        ? this.blogOutputMap(item, item.user, item.banInfo)
+        : this.blogOutputMap(item, item.user),
     );
     const resultBlogs = new PaginationBaseModel<BlogViewModel>(
       generateQuery,
@@ -59,7 +67,7 @@ export class BlogsQueryRepositoryTO {
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: `%${searchNameTerm.toLowerCase()}%`,
       })
-      .andWhere('i.isBanned = :is', { is: false  });
+      .andWhere('i.isBanned = :is', { is: false });
     if (getUsers) {
       totalCount.leftJoinAndSelect('b.user', 'user');
     }
@@ -93,16 +101,12 @@ export class BlogsQueryRepositoryTO {
     return this.blogOutputMap(findedBlog);
   }
 
-  blogOutputMap(blog: BlogViewModel, user?: UserEntity) {
-    const {
-      id,
-      name,
-      description,
-      websiteUrl,
-      isMembership,
-      createdAt,
-      // banInfo
-    } = blog;
+  blogOutputMap(
+    blog: BlogViewModel,
+    user?: UserEntity,
+    banInfo?: BanBlogInfoViewModel,
+  ) {
+    const { id, name, description, websiteUrl, isMembership, createdAt } = blog;
     const output: typeof blog = {
       id: id.toString(),
       name,
@@ -110,10 +114,6 @@ export class BlogsQueryRepositoryTO {
       websiteUrl,
       createdAt,
       isMembership,
-      // banInfo: {
-      //   isBanned: banInfo.isBanned,
-      //   banDate: banInfo.banDate,
-      // }
     };
 
     if (user) {
@@ -123,16 +123,19 @@ export class BlogsQueryRepositoryTO {
       };
     }
 
+    if (banInfo) {
+      output.banInfo = {
+        isBanned: banInfo.isBanned,
+        banDate: banInfo.banDate,
+      };
+    }
 
     return output;
   }
 
   // --------------------- USERS-BAN ------------------------ //
 
-  async getAllBannedUsersForCurrentBlog(
-    query: any,
-    blogId: string,
-  ) {
+  async getAllBannedUsersForCurrentBlog(query: any, blogId: string) {
     const generateQueryBan = await this.generateQueryBan(query, blogId);
     const items = this.banInfoRepository
       .createQueryBuilder('i')
@@ -142,7 +145,7 @@ export class BlogsQueryRepositoryTO {
         name: generateQueryBan.searchLoginTerm.toLowerCase(),
       })
       .andWhere('ban.blogId = :id', { id: blogId })
-      .andWhere('ban.banStatus = :status', {status: true})
+      .andWhere('ban.banStatus = :status', { status: true })
       .orderBy(
         `"${generateQueryBan.sortBy}"`,
         generateQueryBan.sortDirection.toUpperCase(),
@@ -161,10 +164,7 @@ export class BlogsQueryRepositoryTO {
     return resultBlogs;
   }
 
-  private async generateQueryBan(
-    query: any,
-    blogId: string,
-  ) {
+  private async generateQueryBan(query: any, blogId: string) {
     const searchLoginTerm: string = query.searchLoginTerm
       ? query.searchLoginTerm
       : '';
@@ -176,7 +176,7 @@ export class BlogsQueryRepositoryTO {
         name: `%${searchLoginTerm.toLowerCase()}%`,
       })
       .andWhere('ban.blogId = :id', { id: blogId })
-      .andWhere('ban.banStatus = :status', {status: true})
+      .andWhere('ban.banStatus = :status', { status: true });
     const totalCountWithQuery = await totalCount.getCount();
     const pageSize = query.pageSize ? +query.pageSize : 10;
     const pagesCount = Math.ceil(totalCountWithQuery / pageSize);
@@ -193,7 +193,7 @@ export class BlogsQueryRepositoryTO {
   }
 
   banUserOutputMap(item: BlogBanInfoEntity): BanUserForBlogViewModel {
-    const {isBanned, blogBan, banReason, banDate  } = item;
+    const { isBanned, blogBan, banReason, banDate } = item;
     // const output: typeof blog = {
     const output = {
       id: blogBan.userId.toString(),
@@ -201,11 +201,10 @@ export class BlogsQueryRepositoryTO {
       banInfo: {
         isBanned,
         banDate,
-        banReason
-      }
+        banReason,
+      },
     };
 
     return output;
   }
-
 }
