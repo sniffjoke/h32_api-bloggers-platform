@@ -98,6 +98,9 @@ export class BlogsQueryRepositoryTO {
       throw new NotFoundException(`Blog with id ${id} not found`);
     }
     if (user) return this.blogOutputMap(findedBlog, user);
+    if (findedBlog.banInfo.isBanned) {
+      throw new NotFoundException(`Blog with id ${id} not found`);
+    }
     return this.blogOutputMap(findedBlog);
   }
 

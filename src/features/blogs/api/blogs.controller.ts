@@ -1,11 +1,6 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query, Req
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { PostsService } from '../../posts/application/posts.service';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { BlogsQueryRepositoryTO } from '../infrastructure/blogs.query-repository.to';
 import { PostsQueryRepositoryTO } from '../../posts/infrastructure/posts.query-repository.to';
@@ -17,14 +12,14 @@ export class BlogsController {
     private readonly blogsQueryRepository: BlogsQueryRepositoryTO,
     private readonly postsService: PostsService,
     private readonly postsQueryRepository: PostsQueryRepositoryTO,
-  ) {
-  }
+  ) {}
 
-// TODO: метод execute pattern (service)
+  // TODO: метод execute pattern (service)
 
   @Get('blogs') //-1
   async getAll(@Query() query: any) {
-    const blogsWithQuery = await this.blogsQueryRepository.getAllBlogsWithQuery(query);
+    const blogsWithQuery =
+      await this.blogsQueryRepository.getAllBlogsWithQuery(query);
     return blogsWithQuery;
   }
 
@@ -35,13 +30,22 @@ export class BlogsController {
   }
 
   @Get('blogs/:id/posts')
-  async getAllPostsByBlogId(@Param('id') id: string, @Query() query: any, @Req() req: Request) {
-    const posts = await this.postsQueryRepository.getAllPostsWithQuery(query, id);
-    const newData = await this.postsService.generatePostsWithLikesDetails(posts.items, req.headers.authorization as string);
+  async getAllPostsByBlogId(
+    @Param('id') id: string,
+    @Query() query: any,
+    @Req() req: Request,
+  ) {
+    const posts = await this.postsQueryRepository.getAllPostsWithQuery(
+      query,
+      id,
+    );
+    const newData = await this.postsService.generatePostsWithLikesDetails(
+      posts.items,
+      req.headers.authorization as string,
+    );
     return {
       ...posts,
       items: newData,
     };
   }
-
 }
