@@ -408,27 +408,50 @@ describe('BlogsController (e2e)', () => {
       // console.log('post: ', post.body);
       // console.log('upd: ', upd.status)
       // expect(blog.status).toBe(201);
-      // expect(blog.body).toHaveProperty('id');
-      // expect(blog.body).toHaveProperty('name');
-      // expect(blog.body).toHaveProperty('description');
-      // expect(blog.body).toHaveProperty('websiteUrl');
-      // expect(blog.body).toHaveProperty('createdAt');
-      // expect(blog.body).toHaveProperty('isMembership');
-      // expect(new Date(blog.body.createdAt).toISOString()).toContain('T');
-      // expect(blog.body.createdAt).toBeDefined();
-      // expect(blog.body.isMembership).toBeDefined();
-      // expect(blog.body).toEqual(
-      //   expect.objectContaining({
-      //     id: expect.any(String),
-      //     name: expect.any(String),
-      //     description: expect.any(String),
-      //     websiteUrl: expect.stringMatching(checkWebsiteString),
-      //     createdAt: expect.any(String),
-      //     isMembership: expect.any(Boolean),
-      //   }),
-      // );
     });
+  });
 
+  describe('blogger/blogs (e2e)', () => {
+    it('/:id/ban (PUT)', async () => {
+      const emailConfirmationInfo = usersService.createEmailConfirmation(true);
+      const user = await usersManager.createUser(createMockUser(1), emailConfirmationInfo);
+      const loginUser = await authManager.login(mockLoginData(1));
+      const blog = await blogsManager.createBlogByBlogger(
+        createMockBlog(1),
+        loginUser.body.accessToken,
+      );
+      const post = await postsManager.createPost(createMockPost(1), blog.body.id);
+
+      // console.log('blog: ', blog.body);
+
+      const findedBlog = await blogsManager.getBlogById(blog.body.id);
+
+      const findedPost = await postsManager.getPostById(post.body.id);
+
+      console.log('findedBlog: ', findedBlog.body);
+
+      console.log('findedPost: ', findedPost.body);
+
+      const updModel = {
+        isBanned: true,
+      }
+
+      const upd = await blogsManager.banBlogBySuperUser(updModel, blog.body.id);
+
+      const findedBlog2 = await blogsManager.getBlogById(blog.body.id);
+      console.log('findedBlog2: ', findedBlog2.body);
+
+      const findedPost2 = await postsManager.getPostById(post.body.id);
+
+      console.log('findedPost2: ', findedPost2.body);
+
+
+
+      // console.log('user: ', user.b ody.login);
+      // console.log('post: ', post.body);
+      // console.log('upd: ', upd.status)
+      // expect(blog.status).toBe(201);
+    });
   });
 
 

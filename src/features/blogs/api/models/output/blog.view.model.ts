@@ -1,5 +1,4 @@
 import {CommentatorInfoModel} from "../../../../comments/api/models/output/comment.view.model";
-import { BanBlogInfoViewModel } from './ban-blog-info.view.model';
 
 export class BlogViewModel {
     id: string;
@@ -9,5 +8,5 @@ export class BlogViewModel {
     createdAt: string;
     isMembership: boolean;
     blogOwnerInfo?: CommentatorInfoModel;
-    banInfo: BanBlogInfoViewModel;
+    // banInfo: BanBlogInfoViewModel;
 }

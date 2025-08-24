@@ -5,6 +5,7 @@ import { BlogCreateModel } from '../../src/features/blogs/api/models/input/creat
 import request from 'supertest';
 import { codeAuth } from './test-helpers';
 import { BanInfoForUserDto } from '../../src/features/blogs/api/models/input/ban-user-for-blog.dto';
+import { BanBlogBySuperDto } from '../../src/features/blogs/api/models/input/ban-blog.input.dto';
 
 export class BlogsTestManager {
   constructor(
@@ -97,6 +98,15 @@ export class BlogsTestManager {
     const response = await request(this.app.getHttpServer())
       .get(`/blogger/users/blog/${blogId}`)
       .set({ 'Authorization': 'Bearer ' +  accessToken});
+    return response;
+  }
+
+  async banBlogBySuperUser(updModel: BanBlogBySuperDto, id: string) {
+    const apiSettings = this.configService.get('apiSettings', { infer: true });
+    const response = await request(this.app.getHttpServer())
+      .put('/sa/blogs/' + `${id}` + '/ban')
+      .send(updModel)
+      .set({ 'Authorization': `Basic ` + codeAuth(apiSettings.ADMIN) });
     return response;
   }
 
