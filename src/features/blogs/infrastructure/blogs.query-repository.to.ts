@@ -24,20 +24,22 @@ export class BlogsQueryRepositoryTO {
     userId?: string,
     banInfo?: boolean,
   ) {
-    const generateQuery = await this.generateQuery(query, getUsers, userId);
+    const generateQuery = await this.generateQuery(query, getUsers, userId, banInfo);
     const items = this.bRepository
       .createQueryBuilder('b')
       .leftJoinAndSelect('b.banInfo', 'i')
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: generateQuery.searchNameTerm.toLowerCase(),
       })
-      .andWhere('i.isBanned = :is', { is: false })
       .orderBy(
         `b."${generateQuery.sortBy}"`,
         generateQuery.sortDirection.toUpperCase(),
       )
       .offset((generateQuery.page - 1) * generateQuery.pageSize)
       .limit(generateQuery.pageSize);
+    if (!banInfo) {
+      items.andWhere('i.isBanned = :is', { is: false });
+    }
     if (getUsers) {
       items.leftJoinAndSelect('b.user', 'user');
     }
@@ -57,7 +59,12 @@ export class BlogsQueryRepositoryTO {
     return resultBlogs;
   }
 
-  private async generateQuery(query: any, getUsers?: boolean, userId?: string) {
+  private async generateQuery(
+    query: any,
+    getUsers?: boolean,
+    userId?: string,
+    banInfo?: boolean,
+  ) {
     const searchNameTerm: string = query.searchNameTerm
       ? query.searchNameTerm
       : '';
@@ -66,8 +73,10 @@ export class BlogsQueryRepositoryTO {
       .leftJoinAndSelect('b.banInfo', 'i')
       .where('LOWER(b.name) LIKE LOWER(:name)', {
         name: `%${searchNameTerm.toLowerCase()}%`,
-      })
-      .andWhere('i.isBanned = :is', { is: false });
+      });
+    if (!banInfo) {
+      totalCount.andWhere('i.isBanned = :is', { is: false });
+    }
     if (getUsers) {
       totalCount.leftJoinAndSelect('b.user', 'user');
     }
